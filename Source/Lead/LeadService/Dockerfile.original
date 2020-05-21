@@ -1,0 +1,19 @@
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.0-buster-slim AS base
+WORKDIR /app
+EXPOSE 80
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.0-bionic AS build
+WORKDIR /src
+COPY ["LeadService/LeadService.csproj", "LeadService/"]
+RUN dotnet restore "LeadService/LeadService.csproj"
+COPY . .
+WORKDIR "/src/LeadService"
+RUN dotnet build "LeadService.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "LeadService.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "LeadService.dll"]
